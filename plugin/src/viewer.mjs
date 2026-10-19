@@ -95,16 +95,32 @@ function theme() {
 }
 app.addEventListener('toolinput', ({ arguments: args }) => { open(args); });
 app.addEventListener('hostcontextchanged', theme);
-$('export').onclick = () => { if (rendered && !exporting) $('exportDialog').showModal(); };
-$('closeExport').onclick = () => $('exportDialog').close();
-$('exportDialog').onclick = event => { if (event.target === $('exportDialog')) {
-  const rect = $('exportDialog').getBoundingClientRect();
-  if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) $('exportDialog').close();
-} };
+function positionExportMenu() {
+  const menu = $('exportMenu'), rect = $('export').getBoundingClientRect();
+  const left = Math.max(8, Math.min(rect.right - menu.offsetWidth, innerWidth - menu.offsetWidth - 8));
+  const top = rect.bottom + 6 + menu.offsetHeight <= innerHeight - 8
+    ? rect.bottom + 6 : Math.max(8, rect.top - menu.offsetHeight - 6);
+  menu.style.left = `${left}px`; menu.style.top = `${top}px`;
+}
+$('exportMenu').addEventListener('toggle', event => {
+  $('export').setAttribute('aria-expanded', String(event.newState === 'open'));
+  if (event.newState === 'open') { positionExportMenu(); $('copyPng').focus(); }
+});
+$('exportMenu').addEventListener('keydown', event => {
+  const items = [$('copyPng'), $('savePng')];
+  if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+    event.preventDefault();
+    const index = items.indexOf(document.activeElement);
+    items[event.key === 'Home' ? 0 : event.key === 'End' ? 1 : (index + 1) % 2].focus();
+  }
+  if (event.key === 'Escape') { event.preventDefault(); $('exportMenu').hidePopover(); $('export').focus(); }
+  if (event.key === 'Tab') $('exportMenu').hidePopover();
+});
+addEventListener('resize', () => { if ($('exportMenu').matches(':popover-open')) positionExportMenu(); });
 async function exportPng(mode) {
-  if (!rendered || exporting) { $('exportDialog').close(); return; }
+  if (!rendered || exporting) { $('exportMenu').hidePopover(); return; }
   const snapshot = rendered;
-  $('exportDialog').close();
+  $('exportMenu').hidePopover();
   exporting = true; $('export').disabled = true; $('export').textContent = '正在导出…';
   try {
     if (mode === 'copy') {

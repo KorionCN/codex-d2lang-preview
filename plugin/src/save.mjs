@@ -31,9 +31,17 @@ export async function choosePngPath(name) {
 }
 export async function savePng({ blob, name }, choosePath = choosePngPath) {
   const bytes = decodePng(blob);
-  const path = await choosePath(pngName(name));
+  const selectedPath = await choosePath(pngName(name));
+  const path = selectedPath && !extname(selectedPath) ? selectedPath + '.png' : selectedPath;
   if (!path) return { outcome: 'cancelled' };
   if (!isAbsolute(path) || extname(path).toLowerCase() !== '.png') throw new Error('请选择以 .png 结尾的文件名');
-  await writeFile(path, bytes);
+  try {
+    // The picker only confirms replacement of the exact selected path.
+    // Never overwrite a different existing file after adding the extension.
+    await writeFile(path, bytes, { flag: path === selectedPath ? 'w' : 'wx' });
+  } catch (error) {
+    if (error.code === 'EEXIST') throw new Error('同名 PNG 已存在，请在保存窗口直接选择该 .png 文件以确认替换，或使用其他名称');
+    throw error;
+  }
   return { outcome: 'saved', path };
 }

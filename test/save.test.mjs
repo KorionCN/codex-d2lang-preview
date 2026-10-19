@@ -20,3 +20,16 @@ test('cancel and bad data do not save', async () => {
   await assert.rejects(savePng({ blob, name: 'x.png' }, async () => '/tmp/source.d2'), /png/);
   assert.equal(pngName('../../name.png'), 'name.png');
 });
+
+test('missing PNG extension is appended without duplicating existing suffixes or overwriting another file', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'd2-extension-'));
+  try {
+    const base = join(dir, '中文导出');
+    const result = await savePng({ blob, name: 'diagram.png' }, async () => base);
+    assert.equal(result.path, base + '.png');
+    assert.deepEqual(await readFile(result.path), Buffer.from(blob, 'base64'));
+    await assert.rejects(savePng({ blob, name: 'diagram.png' }, async () => base), /同名 PNG/);
+    const upper = join(dir, 'diagram.PNG');
+    assert.equal((await savePng({ blob, name: 'diagram.png' }, async () => upper)).path, upper);
+  } finally { await rm(dir, { recursive: true }); }
+});

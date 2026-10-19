@@ -1,8 +1,10 @@
+import { svgToPng } from './png.mjs';
 import { App } from '@modelcontextprotocol/ext-apps';
 import { OpenAIExtensions, OpenAIFileEntrypointInputSchema } from '@openai/mcp-extensions/app';
 const app = new App({ name: 'D2 Preview', version: '0.1.0' });
 const ext = new OpenAIExtensions(app);
 const $ = id => document.getElementById(id);
+let rendered, exporting = false;
 let file, ready = false, source, generation = 0, zoom = 1, fit = true, debounce;
 let dark = matchMedia('(prefers-color-scheme:dark)').matches;
 function error(message) { $('error').textContent = message; $('error').style.display = 'block'; $('status').textContent = '预览失败 · 修正源文件后会自动重试'; }
@@ -34,6 +36,7 @@ function zoomAt(factor, clientX, clientY) {
 async function render() {
   if (source === undefined) return;
   const ticket = ++generation;
+  rendered = undefined; $('export').disabled = true;
   $('status').textContent = '正在渲染…';
   try {
     const result = await app.callServerTool({ name: 'render_d2', arguments: { source, layout: $('layout').value, dark } });
@@ -52,6 +55,8 @@ async function render() {
       loaded.src = next;
     });
     if (ticket !== generation) return;
+    rendered = { svg, name: file?.name || 'diagram.d2' };
+    $('export').disabled = exporting;
     $('diagram').onload = resize;
     $('diagram').onerror = () => error('SVG 图像加载失败');
     $('diagram').src = next;
@@ -61,6 +66,7 @@ async function render() {
 }
 async function reload() {
   if (!ready || !file) return;
+  rendered = undefined; $('export').disabled = true;
   const current = file.resourceUri;
   try {
     if (!ext.resources) throw new Error('当前宿主未提供文件资源接口，请更新桌面应用后重试。');
@@ -89,6 +95,25 @@ function theme() {
 }
 app.addEventListener('toolinput', ({ arguments: args }) => { open(args); });
 app.addEventListener('hostcontextchanged', theme);
+$('export').onclick = async () => {
+  if (!rendered || exporting) return;
+  const snapshot = rendered;
+  exporting = true; $('export').disabled = true; $('export').textContent = '正在导出…';
+  try {
+    const { blob, width, height } = await svgToPng(snapshot.svg);
+    const name = snapshot.name.replace(/\.d2$/i, '').replace(/[\/\\]/g, '_') + '.png';
+    const result = await app.downloadFile({ contents: [{ type: 'resource', resource: {
+      uri: 'file:///' + encodeURIComponent(name), mimeType: 'image/png', blob,
+    } }] });
+    $('status').textContent = result.isError ? 'PNG 导出已取消或被宿主拒绝' : `PNG 已交给宿主保存 · ${name} · ${width} × ${height}`;
+  } catch (e) {
+    $('error').textContent = 'PNG 导出失败：' + e.message;
+    $('error').style.display = 'block';
+    $('status').textContent = 'PNG 导出失败 · 可重试，或检查宿主是否支持文件下载';
+  } finally {
+    exporting = false; $('export').disabled = !rendered; $('export').textContent = '导出 PNG';
+  }
+};
 $('refresh').onclick = reload; $('layout').onchange = render;
 $('fit').onclick = () => { fit = true; resize(); };
 $('plus').onclick = () => zoomAt(1.25);

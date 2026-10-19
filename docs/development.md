@@ -5,6 +5,7 @@
 - `plugin/src/server.mjs`：MCP stdio 服务，注册文件入口、UI 资源及渲染工具。
 - `plugin/src/render.mjs`：通过 stdin 调用本机 D2，处理大小限制、超时和错误。
 - `plugin/src/viewer.mjs`、`viewer.html`：侧栏 UI、资源订阅、布局与缩放。
+- `plugin/src/png.mjs`：将已渲染 SVG 按画布尺寸转为 PNG，限制内存用量。
 - `plugin/.codex-plugin/plugin.json`：Codex 兼容格式的插件清单。
 - `.agents/plugins/marketplace.json`：本地 marketplace 模板。
 - `scripts/prepare-install.mjs`：生成包含构建产物和本机启动配置的安装包。
@@ -25,3 +26,5 @@
 每次改变安装流程，至少执行 `npm run build`、`npm test`，安装后执行 `npm run test:installed`。便携安装测试会在带空格的临时目录生成安装包，再在最小 PATH 下启动 MCP、读取 UI 并渲染两种布局。普通测试不依赖已安装的 Codex 配置。
 
 发布前的桌面检查：选择 D2 Preview 打开示例，切换布局，使用滚轮缩放，保存当前源文件，制造并修复语法错误，检查浅色和深色主题。更改服务启动路径后需重启宿主加载新配置。
+
+PNG 导出通过浏览器 Canvas 编码，使用 `app.downloadFile` 将 `image/png` 内嵌资源交给宿主，不使用沙箱内被拦截的直接下载链接。测试页面的 `/download` 接口仅用于将导出结果保存到 `test/export-preview.png`，不参与插件运行。

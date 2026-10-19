@@ -1,0 +1,1 @@
+{"name":"local-d2-tools","interface":{"displayName":"Local D2 Tools"},"plugins":[{"name":"d2-preview","source":{"source":"local","path":"./plugin"},"policy":{"installation":"AVAILABLE","authentication":"ON_INSTALL"},"category":"Productivity"}]}

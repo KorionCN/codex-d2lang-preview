@@ -1,0 +1,14 @@
+direction: right
+request: 请求
+validate: 校验
+cache: 缓存
+service: 服务
+storage: 数据库
+response: 响应
+request -> validate
+validate -> cache: 查询
+validate -> service: 缓存未命中
+service -> storage: 读取
+storage -> service: 返回
+cache -> response: 命中
+service -> response

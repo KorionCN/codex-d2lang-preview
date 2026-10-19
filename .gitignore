@@ -1,0 +1,6 @@
+node_modules/
+.local/
+plugin/dist/
+plugin/.mcp.json
+test/*.png
+.DS_Store

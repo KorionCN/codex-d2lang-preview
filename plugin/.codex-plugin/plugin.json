@@ -1,0 +1,1 @@
+{"name":"d2-preview","version":"0.1.0","description":"Preview .d2 diagrams directly in the conversation side panel.","mcpServers":"./.mcp.json","interface":{"displayName":"D2 Preview","shortDescription":"Click .d2 files to preview diagrams","category":"Productivity"}}

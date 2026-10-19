@@ -41,6 +41,10 @@ D2_BIN=/absolute/path/to/d2 npm run install:codex
 2. 如果先显示源码，在文件的“打开方式”菜单中选择 **D2 Preview**。部分版本将插件放在 **Open in ChatGPT** 分组中。宿主会记住该扩展名的查看器偏好，之后点击 `.d2` 可直接预览。
 3. 如果宿主请求访问当前文件，确认后即可加载图表。
 
+下图展示实际预览效果，以及“打开方式”菜单中的 **D2 Preview** 入口：
+
+![Codex 侧栏中的 D2 图表预览与打开方式菜单](docs/images/codex-d2-preview.png)
+
 | 操作 | 效果 |
 | --- | --- |
 | ELK / Dagre 下拉框 | 选择后自动重新渲染，不需要点刷新 |

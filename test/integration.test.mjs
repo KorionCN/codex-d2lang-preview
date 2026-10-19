@@ -26,6 +26,9 @@ test('stdio advertises .d2 file entrypoint and bundled UI; renders and reports e
   await client.connect(new StdioClientTransport({ command: process.execPath, args: [resolve('plugin/dist/server.cjs')] }));
   try {
     const { tools } = await client.listTools();
+    assert.ok(tools.some(t => t.name === 'save_png'));
+    const badPng = await client.callTool({ name: 'save_png', arguments: { blob: 'invalid', name: 'test.png' } });
+    assert.equal(badPng.isError, true);
     assert.deepEqual(tools.find(t => t.name === 'open_d2')._meta['openai/ui'].entrypoints, [{ type: 'file', extensions: ['.d2'] }]);
     const ui = await client.readResource({ uri: 'ui://d2-preview/viewer.html' });
     assert.match(ui.contents[0].text, /适应窗口/);

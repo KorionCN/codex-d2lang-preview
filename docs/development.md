@@ -27,4 +27,4 @@
 
 发布前的桌面检查：选择 D2 Preview 打开示例，切换布局，使用滚轮缩放，保存当前源文件，制造并修复语法错误，检查浅色和深色主题。更改服务启动路径后需重启宿主加载新配置。
 
-PNG 导出通过浏览器 Canvas 编码，使用 `app.downloadFile` 将 `image/png` 内嵌资源交给宿主，不使用沙箱内被拦截的直接下载链接。测试页面的 `/download` 接口仅用于将导出结果保存到 `test/export-preview.png`，不参与插件运行。
+PNG 导出通过浏览器 Canvas 编码。复制使用 Clipboard API；保存使用 `save_png` MCP 工具，通过 macOS 系统文件选择窗口取得用户指定路径后写入。真实 Codex 返回 `ui/download-file: Method not found`，因此不再使用该接口。`test/save.test.mjs` 使用注入的路径选择器验证文件字节、取消和错误输入；该测试不能证明系统窗口已展示。

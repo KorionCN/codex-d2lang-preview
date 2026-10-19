@@ -3,6 +3,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { savePng } from './save.mjs';
 import { renderD2 } from './render.mjs';
 
 const server = new McpServer({ name: 'd2-preview', version: '0.1.0' });
@@ -31,5 +32,14 @@ server.registerTool('render_d2', {
   } catch (error) {
     return { isError: true, content: [{ type: 'text', text: error.message }] };
   }
+});
+server.registerTool('save_png', {
+  title: 'Save PNG', description: 'Show the native save dialog and save the PNG only to the path selected by the user.',
+  inputSchema: { blob: z.string().max(32 * 1024 * 1024), name: z.string().max(256) },
+  annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false },
+  _meta: { ui: { visibility: ['app'] } }
+}, async (args) => {
+  try { return { content: [], structuredContent: await savePng(args) }; }
+  catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }
 });
 server.connect(new StdioServerTransport()).catch(e => { console.error(e); process.exit(1); });

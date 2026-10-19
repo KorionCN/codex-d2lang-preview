@@ -124,7 +124,7 @@ async function exportPng(mode) {
   exporting = true; $('export').disabled = true; $('export').textContent = '正在导出…';
   try {
     if (mode === 'copy') {
-      if (!navigator.clipboard?.write || typeof ClipboardItem === 'undefined') throw new Error('当前宿主不支持图片剪贴板，请使用“保存到磁盘”');
+      if (!navigator.clipboard?.write || typeof ClipboardItem === 'undefined') throw new Error('当前宿主不支持图片剪贴板，请使用“保存到...”');
       // Start the clipboard operation inside the click gesture; encode asynchronously.
       const png = svgToPng(snapshot.svg).then(({ blob }) => new Blob([
         Uint8Array.from(atob(blob), c => c.charCodeAt(0))
@@ -135,14 +135,15 @@ async function exportPng(mode) {
     } else {
       const { blob, width, height } = await svgToPng(snapshot.svg);
       const name = snapshot.name.replace(/\.d2$/i, '').replace(/[\/\\]/g, '_') + '.png';
-      const result = await app.downloadFile({ contents: [{ type: 'resource', resource: {
-        uri: 'file:///' + encodeURIComponent(name), mimeType: 'image/png', blob,
-      } }] });
+      const result = await app.callServerTool({ name: 'save_png', arguments: { blob, name } }, { timeout: 310000 });
+      if (result.isError) throw new Error(result.content?.filter(c => c.type === 'text').map(c => c.text).join('\n') || '保存失败');
+      const saved = result.structuredContent;
+      if (!['saved', 'cancelled'].includes(saved?.outcome)) throw new Error('未收到保存结果');
       if (snapshot === rendered) $('error').style.display = 'none';
-      $('status').textContent = result.isError ? 'PNG 导出已取消或被宿主拒绝' : `PNG 已交给宿主保存 · ${name} · ${width} × ${height}`;
+      $('status').textContent = saved.outcome === 'cancelled' ? '已取消保存' : `已保存 · ${saved.path} · ${width} × ${height}`;
     }
   } catch (e) {
-    $('error').textContent = (mode === 'copy' ? '复制图片失败（请确认宿主允许剪贴板写入，或使用“保存到磁盘”）：' : 'PNG 导出失败：') + e.message;
+    $('error').textContent = (mode === 'copy' ? '复制图片失败（请确认宿主允许剪贴板写入，或使用“保存到...”）：' : 'PNG 导出失败：') + e.message;
     $('error').style.display = 'block';
     $('status').textContent = '导出未完成';
   } finally {

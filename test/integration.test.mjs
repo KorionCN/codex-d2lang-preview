@@ -29,6 +29,7 @@ test('stdio advertises .d2 file entrypoint and bundled UI; renders and reports e
     assert.deepEqual(tools.find(t => t.name === 'open_d2')._meta['openai/ui'].entrypoints, [{ type: 'file', extensions: ['.d2'] }]);
     const ui = await client.readResource({ uri: 'ui://d2-preview/viewer.html' });
     assert.match(ui.contents[0].text, /适应窗口/);
+    assert.deepEqual(ui.contents[0]._meta.ui.permissions, { clipboardWrite: {} });
     assert.ok(!ui.contents[0].text.includes('/*APP_SCRIPT*/'));
     const result = await client.callTool({ name: 'render_d2', arguments: { source: 'a: 中文\na -> b: test' } });
     assert.ok(!result.isError, JSON.stringify(result));

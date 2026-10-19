@@ -9,7 +9,7 @@ const server = new McpServer({ name: 'd2-preview', version: '0.1.0' });
 const uri = 'ui://d2-preview/viewer.html';
 server.registerResource('D2 Preview', uri, { mimeType: 'text/html;profile=mcp-app' }, async () => ({
   contents: [{ uri, mimeType: 'text/html;profile=mcp-app', text: readFileSync(join(__dirname, 'viewer.html'), 'utf8'), _meta: {
-    ui: { csp: { connectDomains: [], resourceDomains: [] } },
+    ui: { permissions: { clipboardWrite: {} }, csp: { connectDomains: [], resourceDomains: [] } },
     'openai/ui': { availableDisplayModes: ['inline', 'fullscreen'], preferredDisplayMode: 'fullscreen' }
   } }]
 }));

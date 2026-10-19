@@ -2,7 +2,7 @@
 import { createServer } from 'node:http';
 import { readFile, writeFile } from 'node:fs/promises';
 import { renderD2 } from '../plugin/src/render.mjs';
-const host = `<!doctype html><html><body style="margin:0"><div style="padding:8px;font:14px system-ui">MCP host test fixture · <button id="dark">切换深色</button><button id="change">模拟文件保存</button><button id="invalid">模拟语法错误</button></div><iframe title="D2 Preview" src="/viewer" style="width:100%;height:85vh;border:0"></iframe><script>
+const host = `<!doctype html><html><body style="margin:0"><div style="padding:8px;font:14px system-ui">MCP host test fixture · <button id="dark">切换深色</button><button id="change">模拟文件保存</button><button id="invalid">模拟语法错误</button></div><iframe allow="clipboard-write" title="D2 Preview" src="/viewer" style="width:100%;height:85vh;border:0"></iframe><script>
 let source='a: 中文源文件\\na -> b: 自动预览', dark=false;
 const f=document.querySelector('iframe');
 function send(method,params){f.contentWindow.postMessage({jsonrpc:'2.0',method,params},location.origin)}

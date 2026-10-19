@@ -95,25 +95,46 @@ function theme() {
 }
 app.addEventListener('toolinput', ({ arguments: args }) => { open(args); });
 app.addEventListener('hostcontextchanged', theme);
-$('export').onclick = async () => {
-  if (!rendered || exporting) return;
+$('export').onclick = () => { if (rendered && !exporting) $('exportDialog').showModal(); };
+$('closeExport').onclick = () => $('exportDialog').close();
+$('exportDialog').onclick = event => { if (event.target === $('exportDialog')) {
+  const rect = $('exportDialog').getBoundingClientRect();
+  if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) $('exportDialog').close();
+} };
+async function exportPng(mode) {
+  if (!rendered || exporting) { $('exportDialog').close(); return; }
   const snapshot = rendered;
+  $('exportDialog').close();
   exporting = true; $('export').disabled = true; $('export').textContent = '正在导出…';
   try {
-    const { blob, width, height } = await svgToPng(snapshot.svg);
-    const name = snapshot.name.replace(/\.d2$/i, '').replace(/[\/\\]/g, '_') + '.png';
-    const result = await app.downloadFile({ contents: [{ type: 'resource', resource: {
-      uri: 'file:///' + encodeURIComponent(name), mimeType: 'image/png', blob,
-    } }] });
-    $('status').textContent = result.isError ? 'PNG 导出已取消或被宿主拒绝' : `PNG 已交给宿主保存 · ${name} · ${width} × ${height}`;
+    if (mode === 'copy') {
+      if (!navigator.clipboard?.write || typeof ClipboardItem === 'undefined') throw new Error('当前宿主不支持图片剪贴板，请使用“保存到磁盘”');
+      // Start the clipboard operation inside the click gesture; encode asynchronously.
+      const png = svgToPng(snapshot.svg).then(({ blob }) => new Blob([
+        Uint8Array.from(atob(blob), c => c.charCodeAt(0))
+      ], { type: 'image/png' }));
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
+      if (snapshot === rendered) $('error').style.display = 'none';
+      $('status').textContent = 'PNG 图片已复制到剪贴板';
+    } else {
+      const { blob, width, height } = await svgToPng(snapshot.svg);
+      const name = snapshot.name.replace(/\.d2$/i, '').replace(/[\/\\]/g, '_') + '.png';
+      const result = await app.downloadFile({ contents: [{ type: 'resource', resource: {
+        uri: 'file:///' + encodeURIComponent(name), mimeType: 'image/png', blob,
+      } }] });
+      if (snapshot === rendered) $('error').style.display = 'none';
+      $('status').textContent = result.isError ? 'PNG 导出已取消或被宿主拒绝' : `PNG 已交给宿主保存 · ${name} · ${width} × ${height}`;
+    }
   } catch (e) {
-    $('error').textContent = 'PNG 导出失败：' + e.message;
+    $('error').textContent = (mode === 'copy' ? '复制图片失败（请确认宿主允许剪贴板写入，或使用“保存到磁盘”）：' : 'PNG 导出失败：') + e.message;
     $('error').style.display = 'block';
-    $('status').textContent = 'PNG 导出失败 · 可重试，或检查宿主是否支持文件下载';
+    $('status').textContent = '导出未完成';
   } finally {
-    exporting = false; $('export').disabled = !rendered; $('export').textContent = '导出 PNG';
+    exporting = false; $('export').disabled = !rendered; $('export').textContent = '导出';
   }
-};
+}
+$('copyPng').onclick = () => exportPng('copy');
+$('savePng').onclick = () => exportPng('save');
 $('refresh').onclick = reload; $('layout').onchange = render;
 $('fit').onclick = () => { fit = true; resize(); };
 $('plus').onclick = () => zoomAt(1.25);
